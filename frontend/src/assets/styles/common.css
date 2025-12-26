@@ -1,0 +1,24 @@
+.new-card h2{
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    display: flex;
+}
+.form-inline label{
+    display: flex;
+}
+.form-inline label div.label{
+    width: 205px;
+    display: flex;
+    align-items: center;
+}
+.form-inline label input[type="text"]{
+    padding: 5px 10px;
+    border-radius: 7px;
+    margin-left: 10px;
+}
+.form-inline .field{
+    display: flex;
+    align-items: center;
+}
