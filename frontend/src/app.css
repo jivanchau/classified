@@ -604,6 +604,46 @@ textarea:focus {
   padding-top: 10px;
 }
 
+.toast-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 40;
+}
+
+.toast {
+  min-width: 240px;
+  max-width: 360px;
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  font-weight: 600;
+  color: #0f172a;
+  border: 1px solid transparent;
+  background: #f8fafc;
+}
+
+.toast-success {
+  background: #ecfdf3;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.toast-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecdd3;
+}
+
+.toast-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
 
 
 @media (max-width: 860px) {

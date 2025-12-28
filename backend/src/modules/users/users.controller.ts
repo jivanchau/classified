@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -7,6 +7,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { AssignRolesDto } from './dto/assign-roles.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
@@ -34,6 +35,22 @@ export class UsersController {
   @Permissions('users.assignRoles')
   async assignRoles(@Param('id') id: string, @Body() dto: AssignRolesDto) {
     const user = await this.usersService.assignRoles(id, dto.roles);
+    return this.usersService.toSafeUser(user);
+  }
+
+  @Patch(':id')
+  @Roles('admin')
+  @Permissions('users.update')
+  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    const user = await this.usersService.update(id, dto);
+    return this.usersService.toSafeUser(user);
+  }
+
+  @Delete(':id')
+  @Roles('admin')
+  @Permissions('users.delete')
+  async remove(@Param('id') id: string) {
+    const user = await this.usersService.remove(id);
     return this.usersService.toSafeUser(user);
   }
 }

@@ -11,6 +11,8 @@ const DEFAULT_PERMISSIONS: { name: string; description: string }[] = [
   { name: 'users.read', description: 'Read users' },
   { name: 'users.create', description: 'Create users' },
   { name: 'users.assignRoles', description: 'Assign roles to users' },
+  { name: 'users.update', description: 'Update users' },
+  { name: 'users.delete', description: 'Delete users' },
   { name: 'roles.read', description: 'Read roles' },
   { name: 'roles.create', description: 'Create roles' },
   { name: 'roles.update', description: 'Update roles' },

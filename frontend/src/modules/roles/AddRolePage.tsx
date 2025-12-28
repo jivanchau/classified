@@ -7,6 +7,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import api from '../../services/api';
 import './roles.css';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useToast } from '../../components/ToastProvider';
 
 interface Permission {
   id: string;
@@ -29,12 +30,12 @@ export default function AddRolePage() {
   const [loading, setLoading] = useState(true);
   const [loadingRole, setLoadingRole] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [formValues, setFormValues] = useState<RoleFormValues>({ name: '', permissions: [] });
   const navigate = useNavigate();
   const { id: roleId } = useParams();
   const isEdit = Boolean(roleId);
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     api
@@ -45,7 +46,9 @@ export default function AddRolePage() {
       })
       .catch(err => {
         const message = err?.response?.data?.message || 'Failed to load permissions';
-        setError(Array.isArray(message) ? message.join(', ') : message);
+        const parsed = Array.isArray(message) ? message.join(', ') : message;
+        setError(parsed);
+        showError(parsed);
       })
       .finally(() => {
         setLoading(false);
@@ -63,7 +66,9 @@ export default function AddRolePage() {
       })
       .catch(err => {
         const message = err?.response?.data?.message || 'Failed to load role';
-        setError(Array.isArray(message) ? message.join(', ') : message);
+        const parsed = Array.isArray(message) ? message.join(', ') : message;
+        setError(parsed);
+        showError(parsed);
       })
       .finally(() => setLoadingRole(false));
   }, [isEdit, roleId]);
@@ -109,7 +114,6 @@ export default function AddRolePage() {
         </button>
       </div>
       {error && <div style={{ color: 'crimson', marginBottom: '0.75rem' }}>{error}</div>}
-      {success && <div style={{ color: 'green', marginBottom: '0.75rem' }}>{success}</div>}
       {loadingRole && isEdit && <div style={{ color: '#4b5563', marginBottom: '0.5rem' }}>Loading role details...</div>}
       <Formik<RoleFormValues>
         initialValues={formValues}
@@ -119,22 +123,21 @@ export default function AddRolePage() {
           try {
             if (isEdit && roleId) {
               await api.patch(`/roles/${roleId}`, values);
-              setSuccess('Role updated successfully');
+              showSuccess('Role updated successfully');
               setFormValues(values);
             } else {
               await api.post('/roles', values);
               helpers.resetForm();
               setFormValues({ name: '', permissions: [] });
-              setSuccess('Role created successfully');
+              showSuccess('Role created successfully');
             }
             setError(null);
-            const successText = isEdit ? 'Role updated successfully' : 'Role created successfully';
-            navigate('/admin/settings/roles', { state: { success: successText } });
+            navigate('/admin/settings/roles');
           } catch (err: any) {
             const fallback = isEdit ? 'Failed to update role' : 'Failed to create role';
             const message = err?.response?.data?.message || fallback;
             setError(Array.isArray(message) ? message.join(', ') : message);
-            setSuccess(null);
+            showError(Array.isArray(message) ? message.join(', ') : message);
           }
         }}
       >
