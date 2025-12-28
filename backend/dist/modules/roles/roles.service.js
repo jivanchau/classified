@@ -34,6 +34,29 @@ let RolesService = class RolesService {
         const role = this.rolesRepo.create({ name: dto.name, permissions });
         return this.rolesRepo.save(role);
     }
+    async findOne(id) {
+        const role = await this.rolesRepo.findOne({ where: { id }, relations: ['permissions'] });
+        if (!role)
+            throw new common_1.NotFoundException('Role not found');
+        return role;
+    }
+    async update(id, dto) {
+        const role = await this.findOne(id);
+        if (dto.name !== undefined) {
+            role.name = dto.name;
+        }
+        if (dto.permissions !== undefined) {
+            const permissions = dto.permissions.length
+                ? await this.permissionsRepo.find({ where: { name: (0, typeorm_2.In)(dto.permissions) } })
+                : [];
+            role.permissions = permissions;
+        }
+        return this.rolesRepo.save(role);
+    }
+    async remove(id) {
+        const role = await this.findOne(id);
+        return this.rolesRepo.remove(role);
+    }
 };
 exports.RolesService = RolesService;
 exports.RolesService = RolesService = __decorate([

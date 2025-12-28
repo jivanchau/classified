@@ -55,6 +55,14 @@ export default function AppRoutes() {
               </RoleGuard>
             }
           />
+          <Route
+            path="/admin/settings/roles/:id/edit"
+            element={
+              <RoleGuard roles={["admin"]}>
+                <AddRolePage />
+              </RoleGuard>
+            }
+          />
           <Route path="/roles" element={<Navigate to="/admin/settings/roles" replace />} />
           <Route path="/roles/new" element={<Navigate to="/admin/settings/roles/new" replace />} />
           <Route path="/permissions" element={<Navigate to="/admin/settings/permissions" replace />} />

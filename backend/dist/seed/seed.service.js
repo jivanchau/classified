@@ -28,6 +28,8 @@ const DEFAULT_PERMISSIONS = [
     { name: 'users.assignRoles', description: 'Assign roles to users' },
     { name: 'roles.read', description: 'Read roles' },
     { name: 'roles.create', description: 'Create roles' },
+    { name: 'roles.update', description: 'Update roles' },
+    { name: 'roles.delete', description: 'Delete roles' },
     { name: 'permissions.read', description: 'Read permissions' },
     { name: 'permissions.create', description: 'Create permissions' }
 ];
