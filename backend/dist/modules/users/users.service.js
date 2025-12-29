@@ -67,6 +67,34 @@ let UsersService = class UsersService {
         user.roles = roleEntities;
         return this.usersRepo.save(user);
     }
+    async update(id, dto) {
+        const user = await this.findById(id);
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        if (dto.name !== undefined) {
+            user.name = dto.name;
+        }
+        if (dto.email !== undefined) {
+            user.email = dto.email;
+        }
+        if (dto.password) {
+            user.password = await bcrypt.hash(dto.password, 10);
+        }
+        if (dto.roles !== undefined) {
+            const roleEntities = dto.roles.length
+                ? await this.rolesRepo.find({ where: { name: (0, typeorm_2.In)(dto.roles) }, relations: ['permissions'] })
+                : [];
+            user.roles = roleEntities;
+        }
+        return this.usersRepo.save(user);
+    }
+    async remove(id) {
+        const user = await this.findById(id);
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        await this.usersRepo.remove(user);
+        return user;
+    }
     toSafeUser(user) {
         var _a, _b;
         const { password } = user, rest = __rest(user, ["password"]);

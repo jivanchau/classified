@@ -22,6 +22,7 @@ const roles_decorator_1 = require("../../common/decorators/roles.decorator");
 const permissions_guard_1 = require("../../common/guards/permissions.guard");
 const permissions_decorator_1 = require("../../common/decorators/permissions.decorator");
 const assign_roles_dto_1 = require("./dto/assign-roles.dto");
+const update_user_dto_1 = require("./dto/update-user.dto");
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
@@ -36,6 +37,14 @@ let UsersController = class UsersController {
     }
     async assignRoles(id, dto) {
         const user = await this.usersService.assignRoles(id, dto.roles);
+        return this.usersService.toSafeUser(user);
+    }
+    async update(id, dto) {
+        const user = await this.usersService.update(id, dto);
+        return this.usersService.toSafeUser(user);
+    }
+    async remove(id) {
+        const user = await this.usersService.remove(id);
         return this.usersService.toSafeUser(user);
     }
 };
@@ -67,6 +76,25 @@ __decorate([
     __metadata("design:paramtypes", [String, assign_roles_dto_1.AssignRolesDto]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "assignRoles", null);
+__decorate([
+    (0, common_1.Patch)(':id'),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, permissions_decorator_1.Permissions)('users.update'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_user_dto_1.UpdateUserDto]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, permissions_decorator_1.Permissions)('users.delete'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "remove", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard, permissions_guard_1.PermissionsGuard),

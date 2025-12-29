@@ -6,8 +6,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Add } from '@mui/icons-material';
 import LockPersonIcon from '@mui/icons-material/LockPerson';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './roles.css';
+import { useToast } from '../../components/ToastProvider';
 
 interface RoleRow {
   id: string;
@@ -23,9 +24,8 @@ export default function RolesPage() {
   const [viewError, setViewError] = useState<string | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const navigate = useNavigate();
-  const location = useLocation();
+  const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -43,20 +43,6 @@ export default function RolesPage() {
     fetchRoles();
   }, []);
 
-  useEffect(() => {
-    const state = location.state as { success?: string } | null;
-    if (state?.success) {
-      setSuccessMessage(state.success);
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location.pathname, location.state, navigate]);
-
-  useEffect(() => {
-    if (!successMessage) return;
-    const timer = setTimeout(() => setSuccessMessage(null), 5000);
-    return () => clearTimeout(timer);
-  }, [successMessage]);
-
   const handleView = async (role: RoleRow) => {
     setViewRole(role);
     setViewError(null);
@@ -66,7 +52,9 @@ export default function RolesPage() {
       setViewRole(data);
     } catch (err: any) {
       const message = err?.response?.data?.message || 'Failed to load role';
-      setViewError(Array.isArray(message) ? message.join(', ') : message);
+      const parsed = Array.isArray(message) ? message.join(', ') : message;
+      setViewError(parsed);
+      showError(parsed);
     } finally {
       setViewLoading(false);
     }
@@ -86,9 +74,11 @@ export default function RolesPage() {
       if (viewRole?.id === role.id) {
         setViewRole(null);
       }
+      showSuccess('Role deleted successfully');
       setError(null);
     } catch (err: any) {
       const message = err?.response?.data?.message || 'Failed to delete role';
+      showError(Array.isArray(message) ? message.join(', ') : message);
       setError(Array.isArray(message) ? message.join(', ') : message);
     } finally {
       setDeletingId(null);
@@ -144,11 +134,6 @@ export default function RolesPage() {
         </button>
       </div>
 
-      {successMessage && (
-        <div className="roles-toast roles-toast-success">
-          {successMessage}
-        </div>
-      )}
       {error && <div style={{ color: 'crimson', marginBottom: '0.5rem' }}>{error}</div>}
 
       <div style={{ height: 360, marginTop: '1rem' }}>

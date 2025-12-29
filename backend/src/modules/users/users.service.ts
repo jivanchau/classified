@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Role } from '../roles/role.entity';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -46,6 +47,39 @@ export class UsersService {
     const roleEntities = await this.rolesRepo.find({ where: { name: In(roles) }, relations: ['permissions'] });
     user.roles = roleEntities;
     return this.usersRepo.save(user);
+  }
+
+  async update(id: string, dto: UpdateUserDto) {
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+
+    if (dto.name !== undefined) {
+      user.name = dto.name;
+    }
+
+    if (dto.email !== undefined) {
+      user.email = dto.email;
+    }
+
+    if (dto.password) {
+      user.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    if (dto.roles !== undefined) {
+      const roleEntities = dto.roles.length
+        ? await this.rolesRepo.find({ where: { name: In(dto.roles) }, relations: ['permissions'] })
+        : [];
+      user.roles = roleEntities;
+    }
+
+    return this.usersRepo.save(user);
+  }
+
+  async remove(id: string) {
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+    await this.usersRepo.remove(user);
+    return user;
   }
 
   toSafeUser(user: User) {
