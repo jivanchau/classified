@@ -7,6 +7,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import ImageIcon from '@mui/icons-material/Image';
 import api from '../../services/api';
 import { useToast } from '../../components/ToastProvider';
 import './categories.css';
@@ -26,6 +27,13 @@ interface FlatCategoryOption {
   id: string;
   title: string;
   depth: number;
+}
+
+interface MediaItem {
+  id: string;
+  title: string;
+  url: string;
+  fileName: string;
 }
 
 const CategorySchema = Yup.object().shape({
@@ -139,6 +147,10 @@ const flattenForOrder = (nodes: CategoryNode[], parentId: string | null = null, 
   return acc;
 };
 
+const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const assetBase = apiBase.replace(/\/api$/, '');
+const buildUrl = (path: string) => (path?.startsWith('http') ? path : `${assetBase}${path || ''}`);
+
 const CategoryItem = ({
   node,
   depth,
@@ -246,6 +258,14 @@ export default function CategoriesPage() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [mediaSelectionMode, setMediaSelectionMode] = useState<'single' | 'multiple'>('single');
+  const [mediaSelectedUrls, setMediaSelectedUrls] = useState<string[]>([]);
+  const [mediaLoadedOnce, setMediaLoadedOnce] = useState(false);
+  const [applyMediaSelection, setApplyMediaSelection] = useState<(value: string) => void>(() => () => {});
   const { showSuccess, showError } = useToast();
 
   const loadCategories = async () => {
@@ -346,6 +366,29 @@ export default function CategoriesPage() {
       }
     : { title: '', banner: '', shortDesc: '', parentId: '' };
 
+  const parseBannerValue = (val?: string | null) =>
+    (val || '')
+      .split(',')
+      .map(v => v.trim())
+      .filter(Boolean);
+
+  const loadMedia = async () => {
+    try {
+      setMediaLoading(true);
+      const { data } = await api.get('/media');
+      setMediaItems(data);
+      setMediaError(null);
+      setMediaLoadedOnce(true);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || 'Failed to load media';
+      const parsed = Array.isArray(message) ? message.join(', ') : message;
+      setMediaError(parsed);
+      showError(parsed);
+    } finally {
+      setMediaLoading(false);
+    }
+  };
+
   return (
     <div className="card rounded-xs permissions-page categories-page">
       <div className="flex flex-wrap gap-2 items-center justify-between bg-blue-600 text-white px-3 py-1.5">
@@ -445,7 +488,19 @@ export default function CategoriesPage() {
               </div>
               <div className="detail-row">
                 <div className="detail-label">Banner</div>
-                <div className="detail-value">{selectedCategory.banner || 'N/A'}</div>
+                <div className="detail-value">
+                  {parseBannerValue(selectedCategory.banner).length ? (
+                    <div className="detail-banners">
+                      {parseBannerValue(selectedCategory.banner).map(url => (
+                        <div key={url} className="detail-banner-thumb">
+                          <img src={buildUrl(url)} alt={selectedCategory.title} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    'N/A'
+                  )}
+                </div>
               </div>
               <div className="detail-row">
                 <div className="detail-label">Short description</div>
@@ -529,8 +584,51 @@ export default function CategoriesPage() {
                       {errors.title && <div style={{ color: 'crimson' }}>{errors.title}</div>}
                     </label>
                     <label>
-                      <div>Banner</div>
-                      <Field name="banner" placeholder="Image URL or text" />
+                      <div className="banner-label">
+                        <span>Banner</span>
+                        <label className="media-mode">
+                          <input
+                            type="checkbox"
+                            checked={mediaSelectionMode === 'multiple'}
+                            onChange={e => {
+                              const nextMode = e.target.checked ? 'multiple' : 'single';
+                              setMediaSelectionMode(nextMode);
+                              if (nextMode === 'single' && mediaSelectedUrls.length > 1) {
+                                setMediaSelectedUrls(mediaSelectedUrls.slice(0, 1));
+                              }
+                            }}
+                          />
+                          <span>Multi-select</span>
+                        </label>
+                      </div>
+                      <div className="media-picker-row">
+                        <Field name="banner" placeholder="Image URL or comma-separated URLs" />
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={async () => {
+                            const parsed = parseBannerValue(values.banner);
+                            setMediaSelectedUrls(parsed);
+                            setMediaSelectionMode(parsed.length > 1 ? 'multiple' : 'single');
+                            setApplyMediaSelection(() => (value: string) => setFieldValue('banner', value));
+                            setShowMediaModal(true);
+                            if (!mediaLoadedOnce) {
+                              await loadMedia();
+                            }
+                          }}
+                        >
+                          <ImageIcon fontSize="small" /> Choose from media
+                        </button>
+                      </div>
+                      {values.banner && (
+                        <div className="media-picker-preview">
+                          {parseBannerValue(values.banner).map(url => (
+                            <div key={url} className="media-preview-thumb">
+                              <img src={buildUrl(url)} alt="Selected banner" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </label>
                     <label>
                       <div>Short description</div>
@@ -572,6 +670,104 @@ export default function CategoriesPage() {
                   </Form>
                 )}
               </Formik>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMediaModal && (
+        <div className="permissions-modal-backdrop">
+          <div className="modal permissions-modal media-picker-modal">
+            <div className="modalTitle">
+              <h3 style={{ marginTop: 0 }}>Select media</h3>
+              <a
+                href="#closeMedia"
+                className="closeModalButton"
+                onClick={e => {
+                  e.preventDefault();
+                  setShowMediaModal(false);
+                }}
+              >
+                ×
+              </a>
+            </div>
+            <div className="modalBody">
+              <div className="media-picker-header">
+                <div>
+                  <div className="eyebrow">Pick {mediaSelectionMode === 'single' ? 'one' : 'one or more'} image(s)</div>
+                  {mediaError && <div style={{ color: 'crimson' }}>{mediaError}</div>}
+                </div>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    setMediaLoadedOnce(false);
+                    loadMedia();
+                  }}
+                  disabled={mediaLoading}
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="media-picker-grid">
+                {mediaLoading ? (
+                  <div className="media-empty">Loading media...</div>
+                ) : mediaItems.length === 0 ? (
+                  <div className="media-empty">No media uploaded yet.</div>
+                ) : (
+                  mediaItems.map(item => {
+                    const isSelected = mediaSelectedUrls.includes(item.url);
+                    return (
+                      <button
+                        type="button"
+                        key={item.id}
+                        className={`media-picker-card ${isSelected ? 'is-selected' : ''}`}
+                        onClick={() => {
+                          if (mediaSelectionMode === 'single') {
+                            setMediaSelectedUrls([item.url]);
+                            return;
+                          }
+                          setMediaSelectedUrls(current =>
+                            current.includes(item.url) ? current.filter(u => u !== item.url) : [...current, item.url]
+                          );
+                        }}
+                      >
+                        <div className="media-picker-thumb">
+                          <img src={buildUrl(item.url)} alt={item.title} />
+                        </div>
+                        <div className="media-picker-title">{item.title}</div>
+                        <div className="media-picker-filename">{item.fileName}</div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+              <div className="permissions-form-actions modalFooter">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    setShowMediaModal(false);
+                    setMediaSelectedUrls([]);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (mediaSelectedUrls.length === 0) {
+                      showError('Please select at least one image');
+                      return;
+                    }
+                    const value = mediaSelectionMode === 'single' ? mediaSelectedUrls[0] : mediaSelectedUrls.join(',');
+                    applyMediaSelection(value);
+                    setShowMediaModal(false);
+                  }}
+                >
+                  Use selection
+                </button>
+              </div>
             </div>
           </div>
         </div>
