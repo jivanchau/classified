@@ -49,6 +49,8 @@ const Header = () => {
             </button>
             <div className="dropdown-menu" role="menu">
               <Link to="/admin/master/users" onClick={closeMenu}>Users</Link>
+              <Link to="/admin/master/categories" onClick={closeMenu}>Categories</Link>
+              <Link to="/admin/master/media" onClick={closeMenu}>Media</Link>
             </div>
           </div>
           <div

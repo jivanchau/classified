@@ -5,9 +5,13 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import { User } from './modules/users/user.entity';
 import { Role } from './modules/roles/role.entity';
 import { Permission } from './modules/permissions/permission.entity';
+import { Category } from './modules/categories/category.entity';
+import { Media } from './modules/media/media.entity';
+import { MediaModule } from './modules/media/media.module';
 import { SeedService } from './seed/seed.service';
 
 @Module({
@@ -17,13 +21,15 @@ import { SeedService } from './seed/seed.service';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       synchronize: true,
-      entities: [User, Role, Permission]
+      entities: [User, Role, Permission, Category, Media]
     }),
-    TypeOrmModule.forFeature([User, Role, Permission]),
+    TypeOrmModule.forFeature([User, Role, Permission, Category, Media]),
     AuthModule,
     UsersModule,
     RolesModule,
-    PermissionsModule
+    PermissionsModule,
+    CategoriesModule,
+    MediaModule
   ],
   providers: [SeedService]
 })

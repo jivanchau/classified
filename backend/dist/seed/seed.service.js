@@ -33,7 +33,15 @@ const DEFAULT_PERMISSIONS = [
     { name: 'roles.update', description: 'Update roles' },
     { name: 'roles.delete', description: 'Delete roles' },
     { name: 'permissions.read', description: 'Read permissions' },
-    { name: 'permissions.create', description: 'Create permissions' }
+    { name: 'permissions.create', description: 'Create permissions' },
+    { name: 'categories.read', description: 'Read categories' },
+    { name: 'categories.create', description: 'Create categories' },
+    { name: 'categories.update', description: 'Update categories' },
+    { name: 'categories.delete', description: 'Delete categories' },
+    { name: 'categories.reorder', description: 'Reorder categories' },
+    { name: 'media.read', description: 'Read media' },
+    { name: 'media.create', description: 'Create media' },
+    { name: 'media.delete', description: 'Delete media' }
 ];
 let SeedService = SeedService_1 = class SeedService {
     constructor(permissionsRepo, rolesRepo, usersRepo, config) {

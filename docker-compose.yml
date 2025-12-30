@@ -22,6 +22,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/classified
       - JWT_SECRET=local_dev_secret
+      - FRONTEND_URL=http://localhost:3000/
     depends_on:
       - db
     volumes:
