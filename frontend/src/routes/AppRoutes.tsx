@@ -8,6 +8,8 @@ import UsersPage from '../modules/users/UsersPage';
 import RolesPage from '../modules/roles/RolesPage';
 import AddRolePage from '../modules/roles/AddRolePage';
 import PermissionsPage from '../modules/permissions/PermissionsPage';
+import CategoriesPage from '../modules/categories/CategoriesPage';
+import MediaPage from '../modules/media/MediaPage';
 import UnauthorizedPage from '../features/auth/UnauthorizedPage';
 import HomePage from '../features/home/HomePage';
 import { RoleGuard } from '../components/RoleGuard';
@@ -30,7 +32,25 @@ export default function AppRoutes() {
               </RoleGuard>
             }
           />
+          <Route
+            path="/admin/master/categories"
+            element={
+              <RoleGuard roles={["admin"]}>
+                <CategoriesPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/admin/master/media"
+            element={
+              <RoleGuard roles={["admin"]}>
+                <MediaPage />
+              </RoleGuard>
+            }
+          />
           <Route path="/users" element={<Navigate to="/admin/master/users" replace />} />
+          <Route path="/categories" element={<Navigate to="/admin/master/categories" replace />} />
+          <Route path="/media" element={<Navigate to="/admin/master/media" replace />} />
           <Route
             path="/admin/settings/roles"
             element={

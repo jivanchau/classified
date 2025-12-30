@@ -14,9 +14,13 @@ const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./modules/users/users.module");
 const roles_module_1 = require("./modules/roles/roles.module");
 const permissions_module_1 = require("./modules/permissions/permissions.module");
+const categories_module_1 = require("./modules/categories/categories.module");
 const user_entity_1 = require("./modules/users/user.entity");
 const role_entity_1 = require("./modules/roles/role.entity");
 const permission_entity_1 = require("./modules/permissions/permission.entity");
+const category_entity_1 = require("./modules/categories/category.entity");
+const media_entity_1 = require("./modules/media/media.entity");
+const media_module_1 = require("./modules/media/media.module");
 const seed_service_1 = require("./seed/seed.service");
 let AppModule = class AppModule {
 };
@@ -29,13 +33,15 @@ exports.AppModule = AppModule = __decorate([
                 type: 'postgres',
                 url: process.env.DATABASE_URL,
                 synchronize: true,
-                entities: [user_entity_1.User, role_entity_1.Role, permission_entity_1.Permission]
+                entities: [user_entity_1.User, role_entity_1.Role, permission_entity_1.Permission, category_entity_1.Category, media_entity_1.Media]
             }),
-            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, role_entity_1.Role, permission_entity_1.Permission]),
+            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, role_entity_1.Role, permission_entity_1.Permission, category_entity_1.Category, media_entity_1.Media]),
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             roles_module_1.RolesModule,
-            permissions_module_1.PermissionsModule
+            permissions_module_1.PermissionsModule,
+            categories_module_1.CategoriesModule,
+            media_module_1.MediaModule
         ],
         providers: [seed_service_1.SeedService]
     })
