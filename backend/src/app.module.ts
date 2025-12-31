@@ -13,6 +13,9 @@ import { Category } from './modules/categories/category.entity';
 import { Media } from './modules/media/media.entity';
 import { MediaModule } from './modules/media/media.module';
 import { SeedService } from './seed/seed.service';
+import { CitiesModule } from './modules/cities/cities.module';
+import { City } from './modules/cities/city.entity';
+import { Location } from './modules/cities/location.entity';
 
 @Module({
   imports: [
@@ -21,15 +24,16 @@ import { SeedService } from './seed/seed.service';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       synchronize: true,
-      entities: [User, Role, Permission, Category, Media]
+      entities: [User, Role, Permission, Category, Media, City, Location]
     }),
-    TypeOrmModule.forFeature([User, Role, Permission, Category, Media]),
+    TypeOrmModule.forFeature([User, Role, Permission, Category, Media, City, Location]),
     AuthModule,
     UsersModule,
     RolesModule,
     PermissionsModule,
     CategoriesModule,
-    MediaModule
+    MediaModule,
+    CitiesModule
   ],
   providers: [SeedService]
 })

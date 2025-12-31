@@ -14,6 +14,15 @@ export class Category {
   @Column({ nullable: true })
   shortDesc?: string;
 
+  @Column({ nullable: true })
+  slug?: string;
+
+  @Column({ nullable: true })
+  icon?: string;
+
+  @Column({ default: 'active' })
+  status!: 'active' | 'inactive';
+
   @Column({ default: 0 })
   position!: number;
 

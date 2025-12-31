@@ -21,6 +21,14 @@ let CategoriesService = class CategoriesService {
     constructor(categoriesRepo) {
         this.categoriesRepo = categoriesRepo;
     }
+    toSlug(value) {
+        return (value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+    }
     async findAllTree() {
         const categories = await this.categoriesRepo.find({
             relations: ['parent'],
@@ -39,10 +47,14 @@ let CategoriesService = class CategoriesService {
         var _a, _b;
         const parent = await this.resolveParent((_a = dto.parentId) !== null && _a !== void 0 ? _a : null);
         const position = await this.getNextPosition((_b = dto.parentId) !== null && _b !== void 0 ? _b : null);
+        const slug = this.toSlug(dto.slug || dto.title);
         const category = this.categoriesRepo.create({
             title: dto.title,
             banner: dto.banner,
             shortDesc: dto.shortDesc,
+            slug,
+            icon: dto.icon,
+            status: dto.status || 'active',
             parent,
             position
         });
@@ -59,12 +71,24 @@ let CategoriesService = class CategoriesService {
         }
         if (dto.title !== undefined) {
             category.title = dto.title;
+            if (!dto.slug && !category.slug) {
+                category.slug = this.toSlug(dto.title);
+            }
+        }
+        if (dto.slug !== undefined) {
+            category.slug = this.toSlug(dto.slug || category.title);
         }
         if (dto.banner !== undefined) {
             category.banner = dto.banner;
         }
         if (dto.shortDesc !== undefined) {
             category.shortDesc = dto.shortDesc;
+        }
+        if (dto.icon !== undefined) {
+            category.icon = dto.icon;
+        }
+        if (dto.status !== undefined) {
+            category.status = dto.status;
         }
         const saved = await this.categoriesRepo.save(category);
         return this.findOneTree(saved.id);
@@ -136,6 +160,9 @@ let CategoriesService = class CategoriesService {
                 title: cat.title,
                 banner: cat.banner || null,
                 shortDesc: cat.shortDesc || null,
+                slug: cat.slug || this.toSlug(cat.title),
+                icon: cat.icon || null,
+                status: cat.status || 'active',
                 parentId: (_c = (_a = cat.parentId) !== null && _a !== void 0 ? _a : (_b = cat.parent) === null || _b === void 0 ? void 0 : _b.id) !== null && _c !== void 0 ? _c : null,
                 position: (_d = cat.position) !== null && _d !== void 0 ? _d : 0,
                 children: []

@@ -10,6 +10,7 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ImageIcon from '@mui/icons-material/Image';
 import api from '../../services/api';
 import { useToast } from '../../components/ToastProvider';
+import MediaModal, { MediaSelectionMode } from '../../components/MediaModal';
 import './categories.css';
 import '../permissions/permission.css';
 
@@ -18,6 +19,9 @@ interface CategoryNode {
   title: string;
   banner?: string | null;
   shortDesc?: string | null;
+  slug?: string | null;
+  icon?: string | null;
+  status: 'active' | 'inactive';
   parentId: string | null;
   position: number;
   children: CategoryNode[];
@@ -29,17 +33,21 @@ interface FlatCategoryOption {
   depth: number;
 }
 
-interface MediaItem {
-  id: string;
-  title: string;
-  url: string;
-  fileName: string;
-}
+const slugify = (value: string) =>
+  (value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
 
 const CategorySchema = Yup.object().shape({
   title: Yup.string().required('Required'),
   banner: Yup.string(),
   shortDesc: Yup.string(),
+  slug: Yup.string().required('Required'),
+  icon: Yup.string(),
+  status: Yup.string().oneOf(['active', 'inactive']).required('Required'),
   parentId: Yup.string().nullable()
 });
 
@@ -60,6 +68,13 @@ const findNodeById = (nodes: CategoryNode[], id: string): CategoryNode | undefin
   return undefined;
 };
 
+const normalizeCategoryStatuses = (nodes: CategoryNode[]): CategoryNode[] =>
+  nodes.map(node => ({
+    ...node,
+    status: node.status || 'active',
+    children: normalizeCategoryStatuses(node.children || [])
+  }));
+
 const collectDescendants = (node: CategoryNode, acc: Set<string>) => {
   node.children?.forEach(child => {
     acc.add(child.id);
@@ -77,6 +92,9 @@ const filterTree = (nodes: CategoryNode[], term: string): CategoryNode[] => {
         const filteredChildren = walk(item.children || []);
         const matches =
           item.title.toLowerCase().includes(query) ||
+          (item.slug || '').toLowerCase().includes(query) ||
+          (item.icon || '').toLowerCase().includes(query) ||
+          (item.status || '').toLowerCase().includes(query) ||
           (item.shortDesc || '').toLowerCase().includes(query) ||
           filteredChildren.length > 0;
 
@@ -204,9 +222,16 @@ const CategoryItem = ({
           <div>
             <div className="category-title">
               {node.title}
+              {node.icon && <span className="category-icon-chip">{node.icon}</span>}
               <span className="category-badge">#{node.position}</span>
             </div>
-            <div className="category-meta">{node.shortDesc || 'No short description yet'}</div>
+            <div className="category-meta">
+              <span className="slug-chip">{node.slug || 'No slug'}</span>
+              <span className={`status-chip ${node.status === 'active' ? 'is-active' : 'is-inactive'}`}>
+                {node.status === 'active' ? 'Active' : 'Inactive'}
+              </span>
+              <span className="category-meta-text">{node.shortDesc || 'No short description yet'}</span>
+            </div>
           </div>
         </div>
         <div className="category-actions">
@@ -259,20 +284,16 @@ export default function CategoriesPage() {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showMediaModal, setShowMediaModal] = useState(false);
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [mediaLoading, setMediaLoading] = useState(false);
-  const [mediaError, setMediaError] = useState<string | null>(null);
-  const [mediaSelectionMode, setMediaSelectionMode] = useState<'single' | 'multiple'>('single');
+  const [mediaSelectionMode, setMediaSelectionMode] = useState<MediaSelectionMode>('single');
   const [mediaSelectedUrls, setMediaSelectedUrls] = useState<string[]>([]);
-  const [mediaLoadedOnce, setMediaLoadedOnce] = useState(false);
-  const [applyMediaSelection, setApplyMediaSelection] = useState<(value: string) => void>(() => () => {});
+  const [applyMediaSelection, setApplyMediaSelection] = useState<(urls: string[]) => void>(() => () => {});
   const { showSuccess, showError } = useToast();
 
   const loadCategories = async () => {
     try {
       setLoading(true);
       const { data } = await api.get('/categories');
-      setCategories(data);
+      setCategories(normalizeCategoryStatuses(data));
       setError(null);
     } catch (err: any) {
       const message = err?.response?.data?.message || 'Failed to load categories';
@@ -362,32 +383,18 @@ export default function CategoriesPage() {
         title: editingCategory.title,
         banner: editingCategory.banner || '',
         shortDesc: editingCategory.shortDesc || '',
+        slug: editingCategory.slug || '',
+        icon: editingCategory.icon || '',
+        status: editingCategory.status || 'active',
         parentId: editingCategory.parentId || ''
       }
-    : { title: '', banner: '', shortDesc: '', parentId: '' };
+    : { title: '', banner: '', shortDesc: '', slug: '', icon: '', status: 'active', parentId: '' };
 
   const parseBannerValue = (val?: string | null) =>
     (val || '')
       .split(',')
       .map(v => v.trim())
       .filter(Boolean);
-
-  const loadMedia = async () => {
-    try {
-      setMediaLoading(true);
-      const { data } = await api.get('/media');
-      setMediaItems(data);
-      setMediaError(null);
-      setMediaLoadedOnce(true);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'Failed to load media';
-      const parsed = Array.isArray(message) ? message.join(', ') : message;
-      setMediaError(parsed);
-      showError(parsed);
-    } finally {
-      setMediaLoading(false);
-    }
-  };
 
   return (
     <div className="card rounded-xs permissions-page categories-page">
@@ -487,6 +494,22 @@ export default function CategoriesPage() {
                 <div className="detail-value">{selectedCategory.title}</div>
               </div>
               <div className="detail-row">
+                <div className="detail-label">Slug</div>
+                <div className="detail-value">{selectedCategory.slug || 'N/A'}</div>
+              </div>
+              <div className="detail-row">
+                <div className="detail-label">Status</div>
+                <div className="detail-value">
+                  <span className={`status-chip ${selectedCategory.status === 'active' ? 'is-active' : 'is-inactive'}`}>
+                    {selectedCategory.status === 'active' ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+              <div className="detail-row">
+                <div className="detail-label">Icon</div>
+                <div className="detail-value">{selectedCategory.icon || 'N/A'}</div>
+              </div>
+              <div className="detail-row">
                 <div className="detail-label">Banner</div>
                 <div className="detail-value">
                   {parseBannerValue(selectedCategory.banner).length ? (
@@ -580,8 +603,44 @@ export default function CategoriesPage() {
                   <Form className="form-grid">
                     <label>
                       <div>Title</div>
-                      <Field name="title" placeholder="Category title" />
+                      <Field name="title">
+                        {({ field }: any) => (
+                          <input
+                            {...field}
+                            placeholder="Category title"
+                            onChange={e => {
+                              field.onChange(e);
+                              const nextTitle = e.target.value;
+                              if (!values.slug || values.slug === slugify(field.value)) {
+                                setFieldValue('slug', slugify(nextTitle));
+                              }
+                            }}
+                          />
+                        )}
+                      </Field>
                       {errors.title && <div style={{ color: 'crimson' }}>{errors.title}</div>}
+                    </label>
+                    <label>
+                      <div>Slug</div>
+                      <Field name="slug" placeholder="category-slug" />
+                      {errors.slug && <div style={{ color: 'crimson' }}>{errors.slug}</div>}
+                    </label>
+                    <label>
+                      <div>Icon name</div>
+                      <Field name="icon" placeholder="e.g., ph-bold ph-apple-logo" />
+                    </label>
+                    <label>
+                      <div>Status</div>
+                      <div className="status-options">
+                        <label className="status-option">
+                          <Field type="radio" name="status" value="active" />
+                          <span>Active</span>
+                        </label>
+                        <label className="status-option">
+                          <Field type="radio" name="status" value="inactive" />
+                          <span>Inactive</span>
+                        </label>
+                      </div>
                     </label>
                     <label>
                       <div className="banner-label">
@@ -606,15 +665,16 @@ export default function CategoriesPage() {
                         <button
                           type="button"
                           className="secondary"
-                          onClick={async () => {
+                          onClick={() => {
                             const parsed = parseBannerValue(values.banner);
+                            const nextMode = parsed.length > 1 ? 'multiple' : mediaSelectionMode;
                             setMediaSelectedUrls(parsed);
-                            setMediaSelectionMode(parsed.length > 1 ? 'multiple' : 'single');
-                            setApplyMediaSelection(() => (value: string) => setFieldValue('banner', value));
+                            setMediaSelectionMode(nextMode);
+                            setApplyMediaSelection(() => (urls: string[]) => {
+                              const value = nextMode === 'single' ? urls[0] : urls.join(',');
+                              setFieldValue('banner', value);
+                            });
                             setShowMediaModal(true);
-                            if (!mediaLoadedOnce) {
-                              await loadMedia();
-                            }
                           }}
                         >
                           <ImageIcon fontSize="small" /> Choose from media
@@ -674,104 +734,17 @@ export default function CategoriesPage() {
           </div>
         </div>
       )}
-
-      {showMediaModal && (
-        <div className="permissions-modal-backdrop">
-          <div className="modal permissions-modal media-picker-modal">
-            <div className="modalTitle">
-              <h3 style={{ marginTop: 0 }}>Select media</h3>
-              <a
-                href="#closeMedia"
-                className="closeModalButton"
-                onClick={e => {
-                  e.preventDefault();
-                  setShowMediaModal(false);
-                }}
-              >
-                ×
-              </a>
-            </div>
-            <div className="modalBody">
-              <div className="media-picker-header">
-                <div>
-                  <div className="eyebrow">Pick {mediaSelectionMode === 'single' ? 'one' : 'one or more'} image(s)</div>
-                  {mediaError && <div style={{ color: 'crimson' }}>{mediaError}</div>}
-                </div>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => {
-                    setMediaLoadedOnce(false);
-                    loadMedia();
-                  }}
-                  disabled={mediaLoading}
-                >
-                  Refresh
-                </button>
-              </div>
-              <div className="media-picker-grid">
-                {mediaLoading ? (
-                  <div className="media-empty">Loading media...</div>
-                ) : mediaItems.length === 0 ? (
-                  <div className="media-empty">No media uploaded yet.</div>
-                ) : (
-                  mediaItems.map(item => {
-                    const isSelected = mediaSelectedUrls.includes(item.url);
-                    return (
-                      <button
-                        type="button"
-                        key={item.id}
-                        className={`media-picker-card ${isSelected ? 'is-selected' : ''}`}
-                        onClick={() => {
-                          if (mediaSelectionMode === 'single') {
-                            setMediaSelectedUrls([item.url]);
-                            return;
-                          }
-                          setMediaSelectedUrls(current =>
-                            current.includes(item.url) ? current.filter(u => u !== item.url) : [...current, item.url]
-                          );
-                        }}
-                      >
-                        <div className="media-picker-thumb">
-                          <img src={buildUrl(item.url)} alt={item.title} />
-                        </div>
-                        <div className="media-picker-title">{item.title}</div>
-                        <div className="media-picker-filename">{item.fileName}</div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-              <div className="permissions-form-actions modalFooter">
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => {
-                    setShowMediaModal(false);
-                    setMediaSelectedUrls([]);
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (mediaSelectedUrls.length === 0) {
-                      showError('Please select at least one image');
-                      return;
-                    }
-                    const value = mediaSelectionMode === 'single' ? mediaSelectedUrls[0] : mediaSelectedUrls.join(',');
-                    applyMediaSelection(value);
-                    setShowMediaModal(false);
-                  }}
-                >
-                  Use selection
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <MediaModal
+        open={showMediaModal}
+        selectionMode={mediaSelectionMode}
+        initialSelection={mediaSelectedUrls}
+        onClose={() => setShowMediaModal(false)}
+        onConfirm={urls => {
+          setMediaSelectedUrls(urls);
+          applyMediaSelection(urls);
+          setShowMediaModal(false);
+        }}
+      />
     </div>
   );
 }

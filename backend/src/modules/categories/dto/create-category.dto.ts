@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateCategoryDto {
   @IsString()
@@ -11,6 +11,19 @@ export class CreateCategoryDto {
   @IsOptional()
   @IsString()
   shortDesc?: string;
+
+  @IsOptional()
+  @IsString()
+  slug?: string;
+
+  @IsOptional()
+  @IsString()
+  icon?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['active', 'inactive'])
+  status?: 'active' | 'inactive';
 
   @IsOptional()
   @IsUUID()

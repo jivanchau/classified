@@ -7,6 +7,9 @@ export interface CategoryTreeNode {
     title: string;
     banner?: string | null;
     shortDesc?: string | null;
+    slug?: string | null;
+    icon?: string | null;
+    status: 'active' | 'inactive';
     parentId: string | null;
     position: number;
     children: CategoryTreeNode[];
@@ -19,6 +22,7 @@ interface CategoryOrderInput {
 export declare class CategoriesService {
     private readonly categoriesRepo;
     constructor(categoriesRepo: Repository<Category>);
+    private toSlug;
     findAllTree(): Promise<CategoryTreeNode[]>;
     findOneTree(id: string): Promise<CategoryTreeNode>;
     create(dto: CreateCategoryDto): Promise<CategoryTreeNode>;

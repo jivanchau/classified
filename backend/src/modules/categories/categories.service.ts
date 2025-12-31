@@ -10,6 +10,9 @@ export interface CategoryTreeNode {
   title: string;
   banner?: string | null;
   shortDesc?: string | null;
+  slug?: string | null;
+  icon?: string | null;
+  status: 'active' | 'inactive';
   parentId: string | null;
   position: number;
   children: CategoryTreeNode[];
@@ -24,6 +27,15 @@ interface CategoryOrderInput {
 @Injectable()
 export class CategoriesService {
   constructor(@InjectRepository(Category) private readonly categoriesRepo: Repository<Category>) {}
+
+  private toSlug(value: string) {
+    return (value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  }
 
   async findAllTree(): Promise<CategoryTreeNode[]> {
     const categories = await this.categoriesRepo.find({
@@ -43,10 +55,14 @@ export class CategoriesService {
   async create(dto: CreateCategoryDto) {
     const parent = await this.resolveParent(dto.parentId ?? null);
     const position = await this.getNextPosition(dto.parentId ?? null);
+    const slug = this.toSlug(dto.slug || dto.title);
     const category = this.categoriesRepo.create({
       title: dto.title,
       banner: dto.banner,
       shortDesc: dto.shortDesc,
+      slug,
+      icon: dto.icon,
+      status: dto.status || 'active',
       parent,
       position
     });
@@ -65,6 +81,13 @@ export class CategoriesService {
 
     if (dto.title !== undefined) {
       category.title = dto.title;
+      if (!dto.slug && !category.slug) {
+        category.slug = this.toSlug(dto.title);
+      }
+    }
+
+    if (dto.slug !== undefined) {
+      category.slug = this.toSlug(dto.slug || category.title);
     }
 
     if (dto.banner !== undefined) {
@@ -73,6 +96,14 @@ export class CategoriesService {
 
     if (dto.shortDesc !== undefined) {
       category.shortDesc = dto.shortDesc;
+    }
+
+    if (dto.icon !== undefined) {
+      category.icon = dto.icon;
+    }
+
+    if (dto.status !== undefined) {
+      category.status = dto.status;
     }
 
     const saved = await this.categoriesRepo.save(category);
@@ -149,6 +180,9 @@ export class CategoriesService {
         title: cat.title,
         banner: cat.banner || null,
         shortDesc: cat.shortDesc || null,
+        slug: cat.slug || this.toSlug(cat.title),
+        icon: cat.icon || null,
+        status: (cat.status as 'active' | 'inactive') || 'active',
         parentId: cat.parentId ?? cat.parent?.id ?? null,
         position: cat.position ?? 0,
         children: []
