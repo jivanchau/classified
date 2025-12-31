@@ -3,6 +3,9 @@ export declare class Category {
     title: string;
     banner?: string;
     shortDesc?: string;
+    slug?: string;
+    icon?: string;
+    status: 'active' | 'inactive';
     position: number;
     parent?: Category | null;
     parentId?: string | null;
