@@ -13,6 +13,7 @@ import MediaPage from '../modules/media/MediaPage';
 import CitiesPage from '../modules/cities/CitiesPage';
 import UnauthorizedPage from '../features/auth/UnauthorizedPage';
 import HomePage from '../features/home/HomePage';
+import FeaturesOptionsPage from '../modules/features-options/FeaturesOptionsPage';
 import { RoleGuard } from '../components/RoleGuard';
 
 export default function AppRoutes() {
@@ -57,10 +58,19 @@ export default function AppRoutes() {
               </RoleGuard>
             }
           />
+          <Route
+            path="/admin/master/features-options"
+            element={
+              <RoleGuard roles={["admin"]}>
+                <FeaturesOptionsPage />
+              </RoleGuard>
+            }
+          />
           <Route path="/users" element={<Navigate to="/admin/master/users" replace />} />
           <Route path="/categories" element={<Navigate to="/admin/master/categories" replace />} />
           <Route path="/cities" element={<Navigate to="/admin/master/cities" replace />} />
           <Route path="/media" element={<Navigate to="/admin/master/media" replace />} />
+          <Route path="/features-options" element={<Navigate to="/admin/master/features-options" replace />} />
           <Route
             path="/admin/settings/roles"
             element={

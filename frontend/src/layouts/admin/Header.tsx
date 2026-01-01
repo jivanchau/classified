@@ -52,6 +52,7 @@ const Header = () => {
               <Link to="/admin/master/cities" onClick={closeMenu}>Cities</Link>
               <Link to="/admin/master/categories" onClick={closeMenu}>Categories</Link>
               <Link to="/admin/master/media" onClick={closeMenu}>Media</Link>
+              <Link to="/admin/master/features-options" onClick={closeMenu}>Feature Options</Link>
             </div>
           </div>
           <div

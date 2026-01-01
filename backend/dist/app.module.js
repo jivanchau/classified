@@ -25,6 +25,8 @@ const seed_service_1 = require("./seed/seed.service");
 const cities_module_1 = require("./modules/cities/cities.module");
 const city_entity_1 = require("./modules/cities/city.entity");
 const location_entity_1 = require("./modules/cities/location.entity");
+const feature_option_entity_1 = require("./modules/features-options/feature-option.entity");
+const features_options_module_1 = require("./modules/features-options/features-options.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -36,16 +38,17 @@ exports.AppModule = AppModule = __decorate([
                 type: 'postgres',
                 url: process.env.DATABASE_URL,
                 synchronize: true,
-                entities: [user_entity_1.User, role_entity_1.Role, permission_entity_1.Permission, category_entity_1.Category, media_entity_1.Media, city_entity_1.City, location_entity_1.Location]
+                entities: [user_entity_1.User, role_entity_1.Role, permission_entity_1.Permission, category_entity_1.Category, media_entity_1.Media, city_entity_1.City, location_entity_1.Location, feature_option_entity_1.FeatureOption]
             }),
-            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, role_entity_1.Role, permission_entity_1.Permission, category_entity_1.Category, media_entity_1.Media, city_entity_1.City, location_entity_1.Location]),
+            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, role_entity_1.Role, permission_entity_1.Permission, category_entity_1.Category, media_entity_1.Media, city_entity_1.City, location_entity_1.Location, feature_option_entity_1.FeatureOption]),
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             roles_module_1.RolesModule,
             permissions_module_1.PermissionsModule,
             categories_module_1.CategoriesModule,
             media_module_1.MediaModule,
-            cities_module_1.CitiesModule
+            cities_module_1.CitiesModule,
+            features_options_module_1.FeaturesOptionsModule
         ],
         providers: [seed_service_1.SeedService]
     })

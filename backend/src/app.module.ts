@@ -16,6 +16,8 @@ import { SeedService } from './seed/seed.service';
 import { CitiesModule } from './modules/cities/cities.module';
 import { City } from './modules/cities/city.entity';
 import { Location } from './modules/cities/location.entity';
+import { FeatureOption } from './modules/features-options/feature-option.entity';
+import { FeaturesOptionsModule } from './modules/features-options/features-options.module';
 
 @Module({
   imports: [
@@ -24,16 +26,17 @@ import { Location } from './modules/cities/location.entity';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       synchronize: true,
-      entities: [User, Role, Permission, Category, Media, City, Location]
+      entities: [User, Role, Permission, Category, Media, City, Location, FeatureOption]
     }),
-    TypeOrmModule.forFeature([User, Role, Permission, Category, Media, City, Location]),
+    TypeOrmModule.forFeature([User, Role, Permission, Category, Media, City, Location, FeatureOption]),
     AuthModule,
     UsersModule,
     RolesModule,
     PermissionsModule,
     CategoriesModule,
     MediaModule,
-    CitiesModule
+    CitiesModule,
+    FeaturesOptionsModule
   ],
   providers: [SeedService]
 })
