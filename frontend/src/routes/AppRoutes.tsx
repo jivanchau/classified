@@ -15,11 +15,13 @@ import UnauthorizedPage from '../features/auth/UnauthorizedPage';
 import HomePage from '../features/home/HomePage';
 import FeaturesOptionsPage from '../modules/features-options/FeaturesOptionsPage';
 import { RoleGuard } from '../components/RoleGuard';
+import AdsPage from '../features/ads/AdsPage';
 
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/ads" element={<AdsPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />

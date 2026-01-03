@@ -644,8 +644,12 @@ textarea:focus {
   border-color: #bfdbfe;
 }
 
-
-
+select.select{
+  padding: 0px 8px;
+}
+button{
+  color: #fff;
+}
 @media (max-width: 860px) {
   .auth-container {
     grid-template-columns: 1fr;
